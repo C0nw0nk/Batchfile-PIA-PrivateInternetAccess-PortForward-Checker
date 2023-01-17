@@ -1,7 +1,7 @@
 @ECHO OFF & setLocal EnableDelayedExpansion
 
 :: Copyright Conor McKnight
-:: https://github.com/C0nw0nk/Transmission
+:: https://github.com/C0nw0nk/Batchfile-PIA-PrivateInternetAccess-PortForward-Checker
 :: https://www.facebook.com/C0nw0nk
 
 :: To run this Automatically open command prompt RUN COMMAND PROMPT AS ADMINISTRATOR and use the following command
@@ -36,7 +36,7 @@ set root_path="%~dp0"
 if not exist %PIA_path% goto :PIA_not_installed
 
 ::5 seconds to wait for vpn to establish connection to perform check on port
-set connection_time=5
+set connection_time=10
 
 ::Make sure that the temporary files used does not exist already.
 del "%TEMP%\regions.txt" 2>nul
@@ -60,7 +60,6 @@ if "%%i"=="%rand%" set random_country=%%j
 )
 echo Random Country to connect to : %random_country%
 if defined connect_new (
-	echo current vpn server does not allow port forward connecting to a different one
 	%PIA_path% ^set region %random_country%
 	%PIA_PATH% connect
 	timeout /t %connection_time% >nul
@@ -75,6 +74,7 @@ for /f "tokens=*" %%a in ('
 		%PIA_PATH% connect
 	)
 )
+set connect_new=
 
 :recheck_portforward
 
@@ -82,14 +82,17 @@ for /f "tokens=*" %%a in ('
 %PIA_path% get portforward 2^>nul
 ') do (
 	if /I %%a == Inactive (
+		echo current vpn server does not allow port forward connecting to a different one
 		set connect_new=true
 		goto :random_country
 	)
 	if /I %%a == Unavailable (
+		echo current vpn server does not allow port forward connecting to a different one
 		set connect_new=true
 		goto :random_country
 	)
 	if /I %%a == Failed (
+		echo current vpn server does not allow port forward connecting to a different one
 		set connect_new=true
 		goto :random_country
 	)
@@ -97,6 +100,7 @@ for /f "tokens=*" %%a in ('
 		goto :recheck_portforward
 	)
 	set portforward=%%a
+	set connect_new=
 )
 set peer-port=%portforward%
 echo Currently forwarding Port : %portforward%
@@ -114,8 +118,12 @@ if /I %old_peer_port% == %peer-port% (
 goto :next_stage
 
 :recheck_portforward_change
+
+goto :recheck_vpn_ip_address_change
+:recheck_vpn_ip_address_change_complete
+
 echo rechecking difference with ports
-if defined  old_peer_port (
+if defined old_peer_port (
 	if /I %old_peer_port% == %peer-port% (
 		echo unchanged port going to recheck again in %port_recheck_time% seconds
 		timeout /t %port_recheck_time% >nul
@@ -127,23 +135,45 @@ if defined  old_peer_port (
 )
 goto :recheck_portforward_change
 
-:next_stage
-:: Start your code here that you want to run when port does change
+goto :next_stage
+:recheck_vpn_ip_address_change
+echo rechecking vpn ip address
+for /f %%a in ('%PIA_PATH% get vpnip') do set "vpn_ip=%%a"
+if "%old_vpn_ip%" == "%vpn_ip%" (
+	echo no change in vpn ip old %old_vpn_ip% new %vpn_ip%
+	goto :recheck_vpn_ip_address_change_complete
+) else (
+	echo vpn ip has changed old ip was %old_vpn_ip% new ip is %vpn_ip%
+	goto :next_stage
+)
 
-echo doing stuff here
-echo port was not the same so we update ports on programs to the new port
+:next_stage
+if not defined old_vpn_ip (
+	set old_vpn_ip=null
+	goto :recheck_vpn_ip_address_change
+)
+:: Start your code here that you want to run when port or ip does change
+
+
+set dig_output=
+for /f %%a in ('call %root_path:"=%dig\dig.cmd') do set "dig_output=%%a"
+if "!dig_output!" == "null" (set connect_new= && break) else (echo dig output !dig_output! get new ip && set connect_new=true && goto :random_country)
+echo blacklist checks complete not in blacklists
+
+::stuff here for updates to dns programs openssl etc
+
 
 :: End your custom code here
-
+:end_custom_code
+set old_vpn_ip=%vpn_ip%
 set old_peer_port=%peer-port%
 goto :recheck_portforward_change
 
 goto :end
 :PIA_not_installed
 echo Private Internet Access not installed please install it first and try again.
+pause
 goto :end
 :end
 
-pause
-
-exit
+exit /b
