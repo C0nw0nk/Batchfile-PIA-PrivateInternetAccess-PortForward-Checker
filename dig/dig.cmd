@@ -1,15 +1,10 @@
-@ECHO OFF & setLocal EnableDelayedExpansion
+@echo off & setLocal EnableDelayedExpansion
 :: Copyright Conor McKnight
 :: https://github.com/C0nw0nk
 :: https://www.facebook.com/C0nw0nk
 :: Automatically sets up dig.exe for windows to use dig like linux
 :: all you need is the batch script it will download the latest versions from their github pages
 :: simple fast efficient easy to move and manage
-:: to use this on its own open command prompt and run C:\pathtothis\dig.cmd you should get a ip address 127.x.x.x output if your IP is on a blacklist
-:: echo zen.spamhaus.org
-:: echo sbl.spamhaus.org 
-:: echo bl.spamcop.net
-:: you can add more to the script
 
 :: Script Settings
 
@@ -20,7 +15,6 @@
 set root_path="%~dp0"
 
 goto :next_download
-
 :start_exe
 ::do stuff here after downloaded and setup
 :: Get IP Address with CURL
