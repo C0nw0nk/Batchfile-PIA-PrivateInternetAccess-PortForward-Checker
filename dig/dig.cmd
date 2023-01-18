@@ -143,27 +143,6 @@ del "%root_path:"=%%~n0-latest-download.ps1"
 del "%root_path:"=%%~n0-psoutput.txt"
 :skip_latest_download_link
 
-:: https://deac-ams.dl.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32%28static%29%5BNo-GOST%5D.zip
-if not exist "%root_path:"=%openssl.exe" (
-	if not defined get_latest_openssl_exe (
-			set grab_latest_url="https://sourceforge.net/settings/mirror_choices?projectname=openssl-for-windows&filename=OpenSSL-1.1.1h_win32%%28static%%29%%5BNo-GOST%%5D.zip&selected=deac-fra"
-			set grab_latest_html_tag="href"
-			set grab_latest_matching_string="*downloads.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32*"
-			set grab_low_range=0
-			set grab_high_range=0
-			set redirect_true_or_false=$true
-			set get_latest_openssl_exe=true
-			goto :get_latest_download_link
-	)
-	if not defined openssl_zip (
-		set downloadurl=%latest_download_output%
-		set file_name_to_extract=OpenSSL-1.1.1h\
-		set delete_download=1
-		set openssl_zip=true
-		goto :start_download
-	)
-)
-
 if not exist "%~dp0\curl.exe" (
 if not defined curl_exe (
 	set downloadurl=https://github.com/C0nw0nk/Cloudflare-my-ip/raw/main/curl.exe
