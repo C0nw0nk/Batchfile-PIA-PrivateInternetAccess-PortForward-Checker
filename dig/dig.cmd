@@ -48,6 +48,9 @@ if "!dig_output!" == "" (break)
 if "!dig_output!" == "" (set dig_output=null)
 :: after if dig debug to see result else (echo %%a : !dig_output!)
 del "%~n0-temp.txt" >nul
+
+echo %dig_output%
+
 ::end stuff
 
 goto :end_script
@@ -100,9 +103,9 @@ echo End Sub
 echo If instr^(ZipFile, "zip"^) ^> 0 Then
 echo ExtractByExtension app.NameSpace^(ZipFile^), "exe", ExtractTo
 echo End If
-if %file_name_to_extract% == * echo set FilesInZip = app.NameSpace^(ZipFile^).items
-if %file_name_to_extract% == * echo app.NameSpace^(ExtractTo^).CopyHere FilesInZip, 4
-if %delete_download% == 1 echo fso.DeleteFile ZipFile
+if [%file_name_to_extract%]==[*] echo set FilesInZip = app.NameSpace^(ZipFile^).items
+if [%file_name_to_extract%]==[*] echo app.NameSpace^(ExtractTo^).CopyHere FilesInZip, 4
+if [%delete_download%]==[1] echo fso.DeleteFile ZipFile
 echo Set fso = Nothing
 echo Set objShell = Nothing
 )>"%root_path:"=%%~n0.vbs"
@@ -249,7 +252,5 @@ if not defined libxml2_dll (
 goto :start_exe
 
 :end_script
-
-echo %dig_output%
 
 exit /b
