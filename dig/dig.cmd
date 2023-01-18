@@ -1,4 +1,4 @@
-@echo off & setLocal EnableDelayedExpansion
+@ECHO OFF & setLocal EnableDelayedExpansion
 :: Copyright Conor McKnight
 :: https://github.com/C0nw0nk
 :: https://www.facebook.com/C0nw0nk
@@ -18,7 +18,6 @@ goto :next_download
 
 :start_exe
 ::do stuff here after downloaded and setup
-
 :: Get IP Address with CURL
 for /F %%I in ('
 %root_path:"=%curl.exe "https://checkip.amazonaws.com/" 2^>Nul
@@ -101,6 +100,8 @@ echo End Sub
 echo If instr^(ZipFile, "zip"^) ^> 0 Then
 echo ExtractByExtension app.NameSpace^(ZipFile^), "exe", ExtractTo
 echo End If
+if %file_name_to_extract% == * echo set FilesInZip = app.NameSpace^(ZipFile^).items
+if %file_name_to_extract% == * echo app.NameSpace^(ExtractTo^).CopyHere FilesInZip, 4
 if %delete_download% == 1 echo fso.DeleteFile ZipFile
 echo Set fso = Nothing
 echo Set objShell = Nothing
@@ -108,6 +109,60 @@ echo Set objShell = Nothing
 cscript //nologo "%root_path:"=%%~n0.vbs"
 del "%root_path:"=%%~n0.vbs"
 :next_download
+goto :skip_latest_download_link
+:get_latest_download_link
+::Get latest download link of a webpage
+(
+echo $url = "%grab_latest_url:"=%"
+echo $html_tag = "%grab_latest_html_tag:"=%"
+echo $matching_string = "%grab_latest_matching_string:"=%"
+echo foreach^($i in %grab_low_range%..%grab_high_range%^){
+echo $downloadUri = ^(^(Invoke-WebRequest $url -UseBasicParsing -MaximumRedirection 10^).Links ^| Where-Object $html_tag -like $matching_string^)[$i].href
+echo if ^( -not ^([string]::IsNullOrEmpty^($downloadUri^)^) ^) {
+echo $true_variable=%redirect_true_or_false%;
+echo if ^($true_variable^) {
+echo if ^($downloadUri -match "^^/"^) {
+echo $var = [System.Uri]$url
+echo $scheme = $var.Scheme
+echo $domain = $var.Host
+echo $downloadUri = $scheme ^+ "://" ^+ $domain ^+ $downloadUri
+echo }
+echo $downloadURL = $downloadUri
+echo $request = Invoke-WebRequest -Method Head -Uri $downloadURL
+echo $redirectedUri = $request.BaseResponse.ResponseUri.AbsoluteUri
+echo $downloadUri = $redirectedUri
+echo }
+echo Write-Output $downloadUri ^| Out-File "%root_path:"=%%~n0-psoutput.txt"
+echo break;
+echo }
+echo }
+)>"%root_path:"=%%~n0-latest-download.ps1"
+powershell -ExecutionPolicy Unrestricted -File "%root_path:"=%%~n0-latest-download.ps1" "%*" -Verb runAs
+for /f "tokens=*" %%a in ('type "%root_path:"=%%~n0-psoutput.txt"') do set "latest_download_output=%%a"
+del "%root_path:"=%%~n0-latest-download.ps1"
+del "%root_path:"=%%~n0-psoutput.txt"
+:skip_latest_download_link
+
+:: https://deac-ams.dl.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32%28static%29%5BNo-GOST%5D.zip
+if not exist "%root_path:"=%openssl.exe" (
+	if not defined get_latest_openssl_exe (
+			set grab_latest_url="https://sourceforge.net/settings/mirror_choices?projectname=openssl-for-windows&filename=OpenSSL-1.1.1h_win32%%28static%%29%%5BNo-GOST%%5D.zip&selected=deac-fra"
+			set grab_latest_html_tag="href"
+			set grab_latest_matching_string="*downloads.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32*"
+			set grab_low_range=0
+			set grab_high_range=0
+			set redirect_true_or_false=$true
+			set get_latest_openssl_exe=true
+			goto :get_latest_download_link
+	)
+	if not defined openssl_zip (
+		set downloadurl=%latest_download_output%
+		set file_name_to_extract=OpenSSL-1.1.1h\
+		set delete_download=1
+		set openssl_zip=true
+		goto :start_download
+	)
+)
 
 if not exist "%~dp0\curl.exe" (
 if not defined curl_exe (
@@ -213,6 +268,7 @@ if not defined libxml2_dll (
 ::end dig dependancies
 
 goto :start_exe
+
 :end_script
 
 echo %dig_output%
