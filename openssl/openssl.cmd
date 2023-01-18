@@ -138,7 +138,7 @@ del "%root_path:"=%%~n0-psoutput.txt"
 :: https://deac-ams.dl.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32%28static%29%5BNo-GOST%5D.zip
 if not exist "%root_path:"=%openssl.exe" (
 	if not defined get_latest_openssl_exe (
-			set grab_latest_url="https://sourceforge.net/settings/mirror_choices?projectname=openssl-for-windows&filename=OpenSSL-1.1.1h_win32%%28static%%29%%5BNo-GOST%%5D.zip&selected=deac-fra"
+			set grab_latest_url="https://sourceforge.net/settings/mirror_choices?projectname=openssl-for-windows&filename=OpenSSL-1.1.1h_win32%%28static%%29%%5BNo-GOST%%5D.zip&selected=autoselect"
 			set grab_latest_html_tag="href"
 			set grab_latest_matching_string="*downloads.sourceforge.net/project/openssl-for-windows/OpenSSL-1.1.1h_win32*"
 			set grab_low_range=0
