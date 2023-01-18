@@ -54,7 +54,7 @@ if "!dig_output!" == "" (set dig_output=null)
 :: after if dig debug to see result else (echo %%a : !dig_output!)
 del "%~n0-temp.txt" >nul
 
-echo %dig_output%
+echo !dig_output!
 
 ::end stuff
 
