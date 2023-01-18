@@ -131,7 +131,7 @@ echo $domain = $var.Host
 echo $downloadUri = $scheme ^+ "://" ^+ $domain ^+ $downloadUri
 echo }
 echo $downloadURL = $downloadUri
-echo $request = Invoke-WebRequest -Method Head -Uri $downloadURL
+echo $request = Invoke-WebRequest -UseBasicParsing -Method Head -Uri $downloadURL
 echo $redirectedUri = $request.BaseResponse.ResponseUri.AbsoluteUri
 echo $downloadUri = $redirectedUri
 echo }
