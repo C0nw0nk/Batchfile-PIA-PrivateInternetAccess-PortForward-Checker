@@ -42,7 +42,7 @@ goto :next_download
 set downloadurl=%downloadurl: =%
 FOR /f %%i IN ("%downloadurl:"=%") DO set filename="%%~ni"& set fileextension="%%~xi"
 set downloadpath="%root_path:"=%%filename%%fileextension%"
-powershell -Command "Invoke-WebRequest -Uri "%downloadurl:"=%" -OutFile "%downloadpath:"=%"
+powershell -Command "Invoke-WebRequest -UseBasicParsing -Uri "%downloadurl:"=%" -OutFile "%downloadpath:"=%"
 goto :next_download
 
 goto :next_download
