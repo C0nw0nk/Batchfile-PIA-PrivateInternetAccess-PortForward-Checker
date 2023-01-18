@@ -18,8 +18,39 @@
 :: ETH ETHEREUM : 0xeD82e64437D0b706a55c3CeA7d116407E43d7257
 :: SHIB SHIBA INU : 0x39443a61368D4208775Fd67913358c031eA86D59
 
-::PIA installation path PrivateInternetAccess VPN
+:: PIA installation path PrivateInternetAccess VPN
 set PIA_path="C:\Program Files\Private Internet Access\piactl.exe"
+
+:: PIA settings file path
+set PIA_settings_json_path="C:\Program Files\Private Internet Access\data\settings.json"
+
+:: The settings below will be enforced if you enable this
+:: 1 enabled
+:: 0 or empty is disabled
+set PIA_custom_settings=1
+
+:: PIA kill switch
+:: auto vpn kill switch only while vpn is turned on if you turn vpn off obviously leaks will occur
+:: on maximum preventing leaks from going outside the vpn even when the vpn is turned off
+:: off no kill switch active
+set PIA_killswitch=on
+
+:: PIA MACE adblocking dns service
+:: true enabled
+:: false disabled
+set PIA_enableMACE=false
+
+:: openvpn
+:: wireguard
+set PIA_vpn_protocol=wireguard
+
+:: Allow local lan traffic
+:: true enabled
+:: false disabled
+set PIA_allowlan=true
+
+:: PIA background daemon to keep VPN active even without GUI running
+set PIA_background_daemon=enable
 
 ::Check for port change every 60 seconds if the port changes we will set the port as the new vpn portforward
 set port_recheck_time=60
@@ -30,10 +61,120 @@ color 0A
 %*
 TITLE C0nw0nk - Automatic - PrivateInternetAccess PortForward
 
+:start
+net session >nul 2>&1
+if %errorlevel% == 0 (
+goto :admin
+) else (
+@pushd "%~dp0" & fltmc | find ^".^" && (powershell start '%~f0' ' %*' -verb runas 2>nul && exit /b)
+)
+goto :start
+:admin
+
+:start_loop
+if "%~1"=="" (
+start /wait /B "" "%~dp0%~nx0" go 2^>Nul
+) else (
+goto begin
+)
+goto start_loop
+:begin
+
 set root_path="%~dp0"
 :: usage %root_path:"=%
 
 if not exist %PIA_path% goto :PIA_not_installed
+
+if [%PIA_custom_settings%]==[1] ( goto :update_pia_settings ) else ( goto :skip_pia_settings )
+
+:update_pia_settings
+
+set PIA_settings_json="%TEMP%\new_settings.json"
+
+for /f "tokens=*" %%a in ('
+%PIA_path% get protocol 2^>nul
+') do (
+	echo %%a
+	if /I %%a == openvpn (
+		%PIA_path% ^set protocol wireguard
+	)
+)
+
+for /f "tokens=*" %%a in ('
+%PIA_path% get allowlan 2^>nul
+') do (
+	echo %%a
+	if /I %%a == false (
+		%PIA_path% ^set allowlan true
+	)
+)
+
+%PIA_path% ^background enable
+
+del %PIA_settings_json% >nul
+for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') do (
+	if /I %%A == ^{ (
+			echo %%A>>%PIA_settings_json%
+		) else (
+			if /I %%A == ^} (
+				echo %%A>>%PIA_settings_json%
+			) else (
+				if /I %%A == ^ ^ ^ ^ ^"killswitch^" (
+					echo %%A: "on",>>%PIA_settings_json%
+				) else (
+					if /I %%A == ^ ^ ^ ^ ^"enableMACE^" (
+						echo %%A: false,>>%PIA_settings_json%
+					) else (
+						if /I %%A == ^ ^ ^ ^ ^]^, (
+							echo %%A>>%PIA_settings_json%
+						) else (
+							if /I %%A == ^ ^ ^ ^ ^}^, (
+								echo %%A>>%PIA_settings_json%
+							) else (
+								if /I %%A == ^ ^ ^ ^ ^ ^ ^ ^ ^]^, (
+									echo %%A>>%PIA_settings_json%
+								) else (
+									if /I %%A == ^ ^ ^ ^ ^ ^ ^ ^ ^ ^}^, (
+										echo %%A>>%PIA_settings_json%
+									) else (
+										if /I %%A == ^ ^ ^ ^ ^ ^ ^ ^ ^] (
+											echo %%A>>%PIA_settings_json%
+										) else (
+											if /I %%A == ^ ^ ^ ^ ^ ^ ^ ^ ^ ^} (
+												echo %%A>>%PIA_settings_json%
+											) else (
+												echo %%A:%%B | FIND /I ",:" >Nul && (
+													echo %%A>>%PIA_settings_json%
+												) || (
+													echo %%A:%%B^" | FIND /I """:""" >Nul && (
+														echo %%A>>%PIA_settings_json%
+													) || (
+														echo %%A:%%B>>%PIA_settings_json%
+													)
+												)
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	)
+)
+
+copy /Y %PIA_settings_json% %PIA_settings_json_path%
+
+::powershell -command "Restart-Service PrivateInternetAccessService -Force"
+net stop PrivateInternetAccessService
+net start PrivateInternetAccessService
+%PIA_path% disconnect
+%PIA_path% set region auto
+%PIA_path% connect
+
+:skip_pia_settings
 
 ::5 seconds to wait for vpn to establish connection to perform check on port
 set connection_time=10
