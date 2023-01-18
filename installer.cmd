@@ -8,7 +8,10 @@
 
 :: Script Settings
 
-
+:: value 1 means install default = empty value to not install
+set hmailserver=
+:: value 1 means install default = empty value to not install
+set pia=1
 
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
@@ -33,7 +36,7 @@ goto begin
 goto start_loop
 :begin
 
-powershell -Command "Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted -Force;"
+:: powershell -Command "Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted -Force;"
 
 set root_path="%~dp0"
 
@@ -137,49 +140,53 @@ del "%root_path:"=%%~n0-latest-download.ps1"
 del "%root_path:"=%%~n0-psoutput.txt"
 :skip_latest_download_link
 
-if not exist "%ProgramFiles(x86)%\hMailServer\Bin\hmailserver.exe" (
-	if not defined get_latest_hmailserver_exe (
-			set grab_latest_url="https://www.hmailserver.com/download_getfile/?performdownload=1&downloadid=271"
-			set grab_latest_html_tag="href"
-			set grab_latest_matching_string="*download_file*"
-			set grab_low_range=0
-			set grab_high_range=0
-			set redirect_true_or_false=$true
-			set get_latest_hmailserver_exe=true
-			goto :get_latest_download_link
+if defined hmailserver (
+	if not exist "%ProgramFiles(x86)%\hMailServer\Bin\hmailserver.exe" (
+		if not defined get_latest_hmailserver_exe (
+				set grab_latest_url="https://www.hmailserver.com/download_getfile/?performdownload=1&downloadid=271"
+				set grab_latest_html_tag="href"
+				set grab_latest_matching_string="*download_file*"
+				set grab_low_range=0
+				set grab_high_range=0
+				set redirect_true_or_false=$true
+				set get_latest_hmailserver_exe=true
+				goto :get_latest_download_link
+		)
+		if not defined hmailserver_exe (
+			set downloadurl=%latest_download_output:~0,-1%e
+			::my little trick for redirects and links that dont have a file name i will create one
+			set downloadurl=!downloadurl!^?#/hMailServer.exe
+			set delete_download=0
+			set hmailserver_exe=true
+			goto :start_download_powershell
+		)
+		Dism /online /Enable-Feature /FeatureName:"NetFx3" >nul
+		call "%root_path:"=%%filename:"=%%fileextension:"=%" /VERYSILENT /PASSWORD=
+		del "%root_path:"=%%filename:"=%%fileextension:"=%"
 	)
-	if not defined hmailserver_exe (
-		set downloadurl=%latest_download_output:~0,-1%e
-		::my little trick for redirects and links that dont have a file name i will create one
-		set downloadurl=!downloadurl!^?#/hMailServer.exe
-		set delete_download=0
-		set hmailserver_exe=true
-		goto :start_download_powershell
-	)
-	Dism /online /Enable-Feature /FeatureName:"NetFx3" >nul
-	call "%root_path:"=%%filename:"=%%fileextension:"=%" /VERYSILENT /PASSWORD=
-	del "%root_path:"=%%filename:"=%%fileextension:"=%"
 )
 
-if not exist "%ProgramFiles%\Private Internet Access\piactl.exe" (
-	if not defined get_latest_pia_exe (
-			set grab_latest_url="https://www.privateinternetaccess.com/download/windows-vpn#download-windows"
-			set grab_latest_html_tag="data-object"
-			set grab_latest_matching_string="*download_windows_64*"
-			set grab_low_range=0
-			set grab_high_range=0
-			set redirect_true_or_false=$false
-			set get_latest_pia_exe=true
-			goto :get_latest_download_link
+if defined pia (
+	if not exist "%ProgramFiles%\Private Internet Access\piactl.exe" (
+		if not defined get_latest_pia_exe (
+				set grab_latest_url="https://www.privateinternetaccess.com/download/windows-vpn#download-windows"
+				set grab_latest_html_tag="data-object"
+				set grab_latest_matching_string="*download_windows_64*"
+				set grab_low_range=0
+				set grab_high_range=0
+				set redirect_true_or_false=$false
+				set get_latest_pia_exe=true
+				goto :get_latest_download_link
+		)
+		if not defined pia_exe (
+			set downloadurl=%latest_download_output%
+			set delete_download=0
+			set pia_exe=true
+			goto :start_download
+		)
+		call "%root_path:"=%%filename:"=%%fileextension:"=%" /silent
+		del "%root_path:"=%%filename:"=%%fileextension:"=%"
 	)
-	if not defined pia_exe (
-		set downloadurl=%latest_download_output%
-		set delete_download=0
-		set pia_exe=true
-		goto :start_download
-	)
-	call "%root_path:"=%%filename:"=%%fileextension:"=%" /silent
-	del "%root_path:"=%%filename:"=%%fileextension:"=%"
 )
 
 echo pausing
