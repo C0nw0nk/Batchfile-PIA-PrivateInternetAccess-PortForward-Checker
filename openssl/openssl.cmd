@@ -1,4 +1,4 @@
-@ECHO OFF & setLocal EnableDelayedExpansion
+@echo off & setLocal EnableDelayedExpansion
 :: Copyright Conor McKnight
 :: https://github.com/C0nw0nk
 :: https://www.facebook.com/C0nw0nk
