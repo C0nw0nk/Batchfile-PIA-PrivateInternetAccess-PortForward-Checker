@@ -1,4 +1,4 @@
-@ECHO OFF & setLocal EnableDelayedExpansion
+@echo off & setLocal EnableDelayedExpansion
 
 :: Copyright Conor McKnight
 :: https://github.com/C0nw0nk/Batchfile-PIA-PrivateInternetAccess-PortForward-Checker
@@ -94,22 +94,20 @@ set PIA_settings_json="%TEMP%\new_settings.json"
 for /f "tokens=*" %%a in ('
 %PIA_path% get protocol 2^>nul
 ') do (
-	echo %%a
 	if /I %%a == openvpn (
-		%PIA_path% ^set protocol wireguard
+		%PIA_path% ^set protocol %PIA_vpn_protocol%
 	)
 )
 
 for /f "tokens=*" %%a in ('
 %PIA_path% get allowlan 2^>nul
 ') do (
-	echo %%a
 	if /I %%a == false (
-		%PIA_path% ^set allowlan true
+		%PIA_path% ^set allowlan %PIA_allowlan%
 	)
 )
 
-%PIA_path% ^background enable
+%PIA_path% ^background %PIA_background_daemon%
 
 del %PIA_settings_json% >nul
 for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') do (
@@ -120,10 +118,10 @@ for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') d
 				echo %%A>>%PIA_settings_json%
 			) else (
 				if /I %%A == ^ ^ ^ ^ ^"killswitch^" (
-					echo %%A: "on",>>%PIA_settings_json%
+					echo %%A: "%PIA_killswitch%",>>%PIA_settings_json%
 				) else (
 					if /I %%A == ^ ^ ^ ^ ^"enableMACE^" (
-						echo %%A: false,>>%PIA_settings_json%
+						echo %%A: %PIA_enableMACE%,>>%PIA_settings_json%
 					) else (
 						if /I %%A == ^ ^ ^ ^ ^]^, (
 							echo %%A>>%PIA_settings_json%
@@ -165,11 +163,11 @@ for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') d
 	)
 )
 
-copy /Y %PIA_settings_json% %PIA_settings_json_path%
+copy /Y %PIA_settings_json% %PIA_settings_json_path% >nul
 
 ::powershell -command "Restart-Service PrivateInternetAccessService -Force"
-net stop PrivateInternetAccessService
-net start PrivateInternetAccessService
+net stop PrivateInternetAccessService >nul
+net start PrivateInternetAccessService >nul
 %PIA_path% disconnect
 %PIA_path% set region auto
 %PIA_path% connect
@@ -202,7 +200,7 @@ if "%%i"=="%rand%" set random_country=%%j
 echo Random Country to connect to : %random_country%
 if defined connect_new (
 	%PIA_path% ^set region %random_country%
-	%PIA_PATH% connect
+	%PIA_path% connect
 	timeout /t %connection_time% >nul
 )
 
@@ -212,7 +210,7 @@ for /f "tokens=*" %%a in ('
 	if /I %%a == false (
 		%PIA_path% ^set requestportforward true
 		%PIA_path% ^set region %random_country%
-		%PIA_PATH% connect
+		%PIA_path% connect
 	)
 )
 set connect_new=
@@ -267,7 +265,7 @@ echo rechecking difference with ports
 if defined old_peer_port (
 	if /I %old_peer_port% == %peer-port% (
 		echo unchanged port going to recheck again in %port_recheck_time% seconds
-		timeout /t %port_recheck_time% >nul
+		timeout /t %port_recheck_time%
 		goto :recheck_portforward
 	) else (
 		echo port changed modifying settings
@@ -279,7 +277,7 @@ goto :recheck_portforward_change
 goto :next_stage
 :recheck_vpn_ip_address_change
 echo rechecking vpn ip address
-for /f %%a in ('%PIA_PATH% get vpnip') do set "vpn_ip=%%a"
+for /f %%a in ('%PIA_path% get vpnip') do set "vpn_ip=%%a"
 if "%old_vpn_ip%" == "%vpn_ip%" (
 	echo no change in vpn ip old %old_vpn_ip% new %vpn_ip%
 	goto :recheck_vpn_ip_address_change_complete
