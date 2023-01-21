@@ -293,13 +293,21 @@ if not defined old_vpn_ip (
 )
 :: Start your code here that you want to run when port or ip does change
 
-
+:: code to check if our ip assigned by vpn is in a blacklist
+:: if our ip is blacklisted get a new one
 set dig_output=
 for /f %%a in ('call %root_path:"=%dig\dig.cmd') do set "dig_output=%%a"
 if "!dig_output!" == "null" (set connect_new= && break) else (echo dig output !dig_output! get new ip && set connect_new=true && goto :random_country)
 echo blacklist checks complete not in blacklists
 
-::stuff here for updates to dns programs openssl etc
+:: code to update ssl if you want to use it
+:: set dig_output=
+:: for /f %%a in ('call %root_path:"=%openssl\openssl.cmd') do set "dig_output=%%a"
+
+:: update dns if you want example
+:: https://github.com/C0nw0nk/Cloudflare-my-ip/blob/main/curl.cmd
+
+::stuff here for updates to dns programs etc
 
 
 :: End your custom code here
