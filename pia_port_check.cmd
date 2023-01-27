@@ -168,13 +168,13 @@ copy /Y %PIA_settings_json% %PIA_settings_json_path% >nul
 :: Service modification to restart automatically if it crashes and instantly at boot
 set servicename=PrivateInternetAccessWireguard
 :: Wireguard service
-SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0
-SC config %servicename% start=auto
+SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+SC config %servicename% start=auto >nul
 
 set servicename=PrivateInternetAccessService
 :: PIA service
-SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0
-SC config %servicename% start=auto
+SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+SC config %servicename% start=auto >nul
 
 ::powershell -command "Restart-Service %servicename% -Force"
 net stop %servicename% >nul
