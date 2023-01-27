@@ -165,9 +165,20 @@ for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') d
 
 copy /Y %PIA_settings_json% %PIA_settings_json_path% >nul
 
-::powershell -command "Restart-Service PrivateInternetAccessService -Force"
-net stop PrivateInternetAccessService >nul
-net start PrivateInternetAccessService >nul
+:: Service modification to restart automatically if it crashes and instantly at boot
+set servicename=PrivateInternetAccessWireguard
+:: Wireguard service
+SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0
+SC config %servicename% start=auto
+
+set servicename=PrivateInternetAccessService
+:: PIA service
+SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0
+SC config %servicename% start=auto
+
+::powershell -command "Restart-Service %servicename% -Force"
+net stop %servicename% >nul
+net start %servicename% >nul
 %PIA_path% disconnect
 %PIA_path% set region auto
 %PIA_path% connect
