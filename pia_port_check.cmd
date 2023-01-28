@@ -306,17 +306,24 @@ if not defined old_vpn_ip (
 
 :: code to check if our ip assigned by vpn is in a blacklist
 :: if our ip is blacklisted get a new one
-set dig_output=
-for /f %%a in ('call %root_path:"=%dig\dig.cmd') do set "dig_output=%%a"
-if "!dig_output!" == "null" (set connect_new= && break) else (echo dig output !dig_output! get new ip && set connect_new=true && goto :random_country)
-echo blacklist checks complete not in blacklists
+if exist "%root_path:"=%dig\dig.cmd" (
+	set dig_output=
+	for /f %%a in ('call %root_path:"=%dig\dig.cmd') do set "dig_output=%%a"
+	if "!dig_output!" == "null" (set connect_new= && break) else (echo dig output !dig_output! get new ip && set connect_new=true && goto :random_country)
+	echo blacklist checks complete not in blacklists
+)
 
 :: code to update ssl if you want to use it
-:: set dig_output=
-:: for /f %%a in ('call %root_path:"=%openssl\openssl.cmd') do set "dig_output=%%a"
+if exist "%root_path:"=%openssl\openssl.cmd" (
+	set dig_output=
+	for /f %%a in ('call %root_path:"=%openssl\openssl.cmd') do set "dig_output=%%a"
+)
 
 :: update dns if you want example
-:: https://github.com/C0nw0nk/Cloudflare-my-ip/blob/main/curl.cmd
+:: https://github.com/C0nw0nk/Cloudflare-my-ip
+if exist "%root_path:"=%dns\cloudflare.cmd" (
+	"C:\path\cloudflare.cmd" "APIKEY" "zone_name" "dns_record" "v^=DMARC1^;^ p^=quarantine" "TXT" "0" "C:\path\curl.exe" 2^>nul
+)
 
 ::stuff here for updates to dns programs etc
 
