@@ -338,7 +338,7 @@ if exist "%root_path_no_last_folder:"=%openssl\openssl.cmd" (
 :: update dns if you want example
 :: https://github.com/C0nw0nk/Cloudflare-my-ip
 if exist "%root_path_no_last_folder:"=%dns\cloudflare.cmd" (
-	"%root_path_no_last_folder:"=%dns\cloudflare.cmd" "APIKEY" "zone_name" "dns_record" "v^=DMARC1^;^ p^=quarantine" "TXT" "0" "%root_path_no_last_folder:"=%dns\curl.exe" 2^>nul
+	"%root_path_no_last_folder:"=%dns\cloudflare.cmd" "APIKEY" "zone_name" "dns_record" "v^=DMARC1^;^ p^=quarantine" "TXT" "0" "%root_path_no_last_folder:"=%dig\curl.exe" 2^>nul
 )
 
 ::stuff here for updates to dns programs etc
