@@ -83,6 +83,16 @@ goto start_loop
 set root_path="%~dp0"
 :: usage %root_path:"=%
 
+::start remove last folder
+set "remove_last_folder=%root_path:"=%"
+::remove last back slash
+set "remove_last_folder=%remove_last_folder:~0,-1%"
+::last folder into var
+set "last1=%remove_last_folder:\=" & set "lastfolder1=%"
+::remove last folder from var
+set root_path_no_last_folder="!remove_last_folder:%lastfolder1%=!"
+::end remove last folder
+
 if not exist %PIA_path% goto :PIA_not_installed
 
 if [%PIA_custom_settings%]==[1] ( goto :update_pia_settings ) else ( goto :skip_pia_settings )
@@ -208,7 +218,7 @@ set /a rand=%random% %% 153
 for /f "tokens=1* delims=:" %%i in ('findstr /n .* "%TEMP%\regions.txt"') do (
 if "%%i"=="%rand%" set random_country=%%j
 )
-echo Random Country to connect to : %random_country%
+echo Random Country to connect to : "%random_country%"
 if defined connect_new (
 	%PIA_path% ^set region %random_country%
 	%PIA_path% connect
@@ -252,13 +262,13 @@ for /f "tokens=*" %%a in ('
 	set portforward=%%a
 	set connect_new=
 )
-set peer-port=%portforward%
-echo Currently forwarding Port : %portforward%
+set "peer-port=%portforward%"
+echo Currently forwarding Port : "%portforward%"
 timeout /t %connection_time% >nul
 
 if defined old_peer_port (goto :checkme) else (goto :next_stage)
 :checkme
-if /I %old_peer_port% == %peer-port% (
+if /I "%old_peer_port%" == "%peer-port%" (
 	echo ports matched unchanged
 	goto :recheck_portforward_change
 ) else (
@@ -274,8 +284,8 @@ goto :recheck_vpn_ip_address_change
 
 echo rechecking difference with ports
 if defined old_peer_port (
-	if /I %old_peer_port% == %peer-port% (
-		echo unchanged port going to recheck again in %port_recheck_time% seconds
+	if /I "%old_peer_port%" == "%peer-port%" (
+		echo unchanged port going to recheck again in "%port_recheck_time%" seconds
 		timeout /t %port_recheck_time%
 		goto :recheck_portforward
 	) else (
@@ -288,12 +298,18 @@ goto :recheck_portforward_change
 goto :next_stage
 :recheck_vpn_ip_address_change
 echo rechecking vpn ip address
-for /f %%a in ('%PIA_path% get vpnip') do set "vpn_ip=%%a"
+for /f %%a in ('
+%PIA_path% get vpnip 2^>nul
+') do (
+set "vpn_ip=%%a"
+)
 if "%old_vpn_ip%" == "%vpn_ip%" (
-	echo no change in vpn ip old %old_vpn_ip% new %vpn_ip%
+	echo no change in vpn ip old "%old_vpn_ip%" new "%vpn_ip%"
+
 	goto :recheck_vpn_ip_address_change_complete
 ) else (
-	echo vpn ip has changed old ip was %old_vpn_ip% new ip is %vpn_ip%
+	echo vpn ip has changed old ip was "%old_vpn_ip%" new ip is "%vpn_ip%"
+
 	goto :next_stage
 )
 
@@ -306,23 +322,23 @@ if not defined old_vpn_ip (
 
 :: code to check if our ip assigned by vpn is in a blacklist
 :: if our ip is blacklisted get a new one
-if exist "%root_path:"=%dig\dig.cmd" (
+if exist "%root_path_no_last_folder:"=%dig\dig.cmd" (
 	set dig_output=
-	for /f %%a in ('call %root_path:"=%dig\dig.cmd') do set "dig_output=%%a"
+	for /f %%a in ('call %root_path_no_last_folder:"=%dig\dig.cmd') do set "dig_output=%%a"
 	if "!dig_output!" == "null" (set connect_new= && break) else (echo dig output !dig_output! get new ip && set connect_new=true && goto :random_country)
 	echo blacklist checks complete not in blacklists
 )
 
 :: code to update ssl if you want to use it
-if exist "%root_path:"=%openssl\openssl.cmd" (
+if exist "%root_path_no_last_folder:"=%openssl\openssl.cmd" (
 	set dig_output=
-	for /f %%a in ('call %root_path:"=%openssl\openssl.cmd') do set "dig_output=%%a"
+	for /f %%a in ('call %root_path_no_last_folder:"=%openssl\openssl.cmd') do set "dig_output=%%a"
 )
 
 :: update dns if you want example
 :: https://github.com/C0nw0nk/Cloudflare-my-ip
-if exist "%root_path:"=%dns\cloudflare.cmd" (
-	"C:\path\cloudflare.cmd" "APIKEY" "zone_name" "dns_record" "v^=DMARC1^;^ p^=quarantine" "TXT" "0" "C:\path\curl.exe" 2^>nul
+if exist "%root_path_no_last_folder:"=%dns\cloudflare.cmd" (
+	"%root_path_no_last_folder:"=%dns\cloudflare.cmd" "APIKEY" "zone_name" "dns_record" "v^=DMARC1^;^ p^=quarantine" "TXT" "0" "%root_path_no_last_folder:"=%dns\curl.exe" 2^>nul
 )
 
 ::stuff here for updates to dns programs etc
