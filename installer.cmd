@@ -9,7 +9,7 @@
 :: Script Settings
 
 :: value 1 means install default = empty value to not install
-set hmailserver=
+set hmailserver=1
 :: value 1 means install default = empty value to not install
 set pia=1
 
@@ -163,6 +163,14 @@ if defined hmailserver (
 		Dism /online /Enable-Feature /FeatureName:"NetFx3" >nul
 		call "%root_path:"=%%filename:"=%%fileextension:"=%" /VERYSILENT /PASSWORD=
 		del "%root_path:"=%%filename:"=%%fileextension:"=%"
+
+		set servicename=hMailServer
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
+	) else (
+		set servicename=hMailServer
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
 	)
 )
 
@@ -186,11 +194,23 @@ if defined pia (
 		)
 		call "%root_path:"=%%filename:"=%%fileextension:"=%" /silent
 		del "%root_path:"=%%filename:"=%%fileextension:"=%"
+
+		set servicename=PrivateInternetAccessWireguard
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
+
+		set servicename=PrivateInternetAccessService
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
+	) else (
+		set servicename=PrivateInternetAccessWireguard
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
+
+		set servicename=PrivateInternetAccessService
+		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
+		SC config %servicename% start=auto >nul
 	)
 )
-
-echo pausing
-
-pause
 
 exit /b
