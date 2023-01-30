@@ -63,6 +63,11 @@ set port_recheck_time=60
 
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
+if "%~1"=="" goto :script_arguments_not_defined
+set PIA_username=%~1
+set PIA_password=%~2
+:script_arguments_not_defined
+
 color 0A
 %*
 TITLE C0nw0nk - Automatic - PrivateInternetAccess PortForward
