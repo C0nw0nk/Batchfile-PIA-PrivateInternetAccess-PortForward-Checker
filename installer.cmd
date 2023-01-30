@@ -167,10 +167,16 @@ if defined hmailserver (
 		set servicename=hMailServer
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 		SC config %servicename% start=auto >nul
+		if defined pia (
+			SC config %servicename% depend=PrivateInternetAccessService/PrivateInternetAccessWireguard >nul
+		)
 	) else (
 		set servicename=hMailServer
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 		SC config %servicename% start=auto >nul
+		if defined pia (
+			SC config %servicename% depend=PrivateInternetAccessService/PrivateInternetAccessWireguard >nul
+		)
 	)
 )
 
@@ -198,6 +204,7 @@ if defined pia (
 		set servicename=PrivateInternetAccessWireguard
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 		SC config %servicename% start=auto >nul
+		SC config %servicename% depend=PrivateInternetAccessService >nul
 
 		set servicename=PrivateInternetAccessService
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
@@ -206,6 +213,7 @@ if defined pia (
 		set servicename=PrivateInternetAccessWireguard
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 		SC config %servicename% start=auto >nul
+		SC config %servicename% depend=PrivateInternetAccessService >nul
 
 		set servicename=PrivateInternetAccessService
 		SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
