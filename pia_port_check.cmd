@@ -29,6 +29,12 @@ set PIA_settings_json_path="C:\Program Files\Private Internet Access\data\settin
 :: 0 or empty is disabled
 set PIA_custom_settings=1
 
+::PIA username
+set PIA_username=pXXXXXX
+
+::PIA password
+set PIA_password=XXXXXXXX
+
 :: PIA kill switch
 :: auto vpn kill switch only while vpn is turned on if you turn vpn off obviously leaks will occur
 :: on maximum preventing leaks from going outside the vpn even when the vpn is turned off
@@ -98,6 +104,13 @@ if not exist %PIA_path% goto :PIA_not_installed
 if [%PIA_custom_settings%]==[1] ( goto :update_pia_settings ) else ( goto :skip_pia_settings )
 
 :update_pia_settings
+
+(
+echo %PIA_username%
+echo %PIA_password%
+)>"%TEMP%\piafile"
+::login to PIA
+%PIA_path% login "%TEMP%\piafile" 2^>nul
 
 set PIA_settings_json="%TEMP%\new_settings.json"
 
