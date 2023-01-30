@@ -30,10 +30,10 @@ set PIA_settings_json_path="C:\Program Files\Private Internet Access\data\settin
 set PIA_custom_settings=1
 
 ::PIA username
-set PIA_username=pXXXXXX
+set PIA_username=
 
 ::PIA password
-set PIA_password=XXXXXXXX
+set PIA_password=
 
 :: PIA kill switch
 :: auto vpn kill switch only while vpn is turned on if you turn vpn off obviously leaks will occur
@@ -193,6 +193,7 @@ set servicename=PrivateInternetAccessWireguard
 :: Wireguard service
 SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 SC config %servicename% start=auto >nul
+SC config %servicename% depend=PrivateInternetAccessService >nul
 
 set servicename=PrivateInternetAccessService
 :: PIA service
