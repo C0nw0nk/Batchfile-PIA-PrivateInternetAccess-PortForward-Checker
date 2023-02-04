@@ -30,10 +30,10 @@ set PIA_settings_json_path="C:\Program Files\Private Internet Access\data\settin
 set PIA_custom_settings=1
 
 ::PIA username
-set PIA_username=
+set PIA_username=""
 
 ::PIA password
-set PIA_password=
+set PIA_password=""
 
 :: PIA kill switch
 :: auto vpn kill switch only while vpn is turned on if you turn vpn off obviously leaks will occur
