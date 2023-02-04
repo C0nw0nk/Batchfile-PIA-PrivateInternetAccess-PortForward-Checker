@@ -206,8 +206,8 @@ SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
 SC config %servicename% start=auto >nul
 
 ::powershell -command "Restart-Service %servicename% -Force"
-net stop %servicename% >nul
-net start %servicename% >nul
+net stop %servicename% /y >nul
+net start %servicename% /y >nul
 %PIA_path% disconnect
 %PIA_path% set region auto
 %PIA_path% connect
