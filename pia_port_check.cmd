@@ -61,6 +61,9 @@ set PIA_background_daemon=enable
 ::Check for port change every 60 seconds if the port changes we will set the port as the new vpn portforward
 set port_recheck_time=60
 
+::prevent being auto logged out by session expired on long running vpn times always stay logged in
+set session_expires=3600
+
 :: End Edit DO NOT TOUCH ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOUR DOING!
 
 if "%~1"=="" goto :script_arguments_not_defined
@@ -104,6 +107,10 @@ set "last1=%remove_last_folder:\=" & set "lastfolder1=%"
 set root_path_no_last_folder="!remove_last_folder:%lastfolder1%=!"
 ::end remove last folder
 
+set vbs_script=\time1.vbs
+del %temp%%vbs_script% 2>nul
+echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
+
 if not exist %PIA_path% goto :PIA_not_installed
 
 if [%PIA_custom_settings%]==[1] ( goto :update_pia_settings ) else ( goto :skip_pia_settings )
@@ -111,8 +118,8 @@ if [%PIA_custom_settings%]==[1] ( goto :update_pia_settings ) else ( goto :skip_
 :update_pia_settings
 
 (
-echo %PIA_username%
-echo %PIA_password%
+echo %PIA_username:"=%
+echo %PIA_password:"=%
 )>"%TEMP%\piafile"
 ::login to PIA
 %PIA_path% login "%TEMP%\piafile" 2^>nul
@@ -194,11 +201,12 @@ for /F "tokens=1* delims=:" %%A in ('call %PIA_path% -u dump daemon-settings') d
 copy /Y %PIA_settings_json% %PIA_settings_json_path% >nul
 
 :: Service modification to restart automatically if it crashes and instantly at boot
-set servicename=PrivateInternetAccessWireguard
+set servicename_wire=PrivateInternetAccessWireguard
+net stop %servicename_wire% /y >nul
 :: Wireguard service
-SC Failure %servicename% actions=restart/0/restart/0/restart/0// reset=0 >nul
-SC config %servicename% start=auto >nul
-SC config %servicename% depend=PrivateInternetAccessService >nul
+SC Failure %servicename_wire% actions=restart/0/restart/0/restart/0// reset=0 >nul
+SC config %servicename_wire% start=auto >nul
+SC config %servicename_wire% depend=PrivateInternetAccessService >nul
 
 set servicename=PrivateInternetAccessService
 :: PIA service
@@ -208,6 +216,7 @@ SC config %servicename% start=auto >nul
 ::powershell -command "Restart-Service %servicename% -Force"
 net stop %servicename% /y >nul
 net start %servicename% /y >nul
+
 %PIA_path% disconnect
 %PIA_path% set region auto
 %PIA_path% connect
@@ -254,9 +263,7 @@ for /f "tokens=*" %%a in ('
 	)
 )
 set connect_new=
-
 :recheck_portforward
-
 for /f "tokens=*" %%a in ('
 %PIA_path% get portforward 2^>nul
 ') do (
@@ -286,7 +293,25 @@ echo Currently forwarding Port : "%portforward%"
 timeout /t %connection_time% >nul
 
 if defined old_peer_port (goto :checkme) else (goto :next_stage)
+
 :checkme
+
+:: session logout fix
+set vbs_script=\time1.vbs
+echo WScript.Echo(DateDiff("s", "01/01/1970 00:00:00", Now())) > %temp%%vbs_script%
+for /f "tokens=*" %%a in ('cscript //nologo %temp%%vbs_script%') do set /a current_time=%%a && if not defined origin_time set /a origin_time=!current_time: =! && set /a session_renew_time=!origin_time!+%session_expires%
+if !current_time! GTR !session_renew_time! (
+	echo session expired running login to refresh session
+	set origin_time=
+(
+echo %PIA_username:"=%
+echo %PIA_password:"=%
+)>"%TEMP%\piafile"
+::login to PIA
+%PIA_path% login "%TEMP%\piafile" 2^>nul
+)
+:: session logout fix
+
 if /I "%old_peer_port%" == "%peer-port%" (
 	echo ports matched unchanged
 	goto :recheck_portforward_change
